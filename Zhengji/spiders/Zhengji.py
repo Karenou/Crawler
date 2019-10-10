@@ -25,9 +25,9 @@ class ZhengJi(scrapy.Spider):
         self.logger.info(f"Total time cost of spider: {spider.worked_time} ")
 
     def parse(self, response):
-        cate_urls = response.css("div.box-category").xpath('ul/li/a/@href').extract()[1:]
+        cate_urls = response.css("div.box-category").xpath('ul/li/a/@href').extract()[2:4]
         for cate_url in cate_urls:
-            meta = {"cate_urls": cate_url}
+            meta = {'cate_urls': cate_url}
             yield scrapy.Request(cate_url, callback=self.parse_cate_pagination, meta=meta)
 
     def parse_cate_pagination(self, response):
@@ -35,18 +35,19 @@ class ZhengJi(scrapy.Spider):
         # get the url of last page if any
         last_page = response.css("div.pagination").xpath('div/a[contains(text(), ">|")]/@href').extract()
         if last_page:
+            # start from page=2
             last_page_no = int(parse_qs(urlparse(last_page[0]).query)['page'][0])
-            url = f"{cate_url}&page=2"
-            yield scrapy.Request(url, callback=self.parse_product, meta=response.meta)
-            if last_page_no > 2:
-                for i in range(2, last_page_no + 1):
+            for i in range(1, last_page_no + 1):
+                if i == 1:
+                    yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
+                else:
                     url = f"{cate_url}&page={i}"
-                    yield scrapy.Request(url, callback= self.parse_product, meta = response.meta)
+                    yield scrapy.Request(url, callback= self.parse_product, meta=response.meta)
         else:
-            yield scrapy.Request(cate_url, callback=self.parse_product, meta = response.meta)
+            yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
 
     def parse_product(self, response):
-        product_urls = response.css("div.product-wrapper").xpath('div/a/@href').extract()
+        product_urls = response.css(" .product-list-item").xpath('div/a/@href').extract()
         for product_url in product_urls:
             yield scrapy.Request(product_url, callback=self.parse_product_info, meta=response.meta)
 
@@ -57,6 +58,7 @@ class ZhengJi(scrapy.Spider):
         # extract only Chinese name
         cate_name = response.xpath('//span[@itemprop="title"]/text()').extract()[1]
         re_words = re.compile(u"[\u4e00-\u9fa5]+")
+        # fix error: NoneType don't have attribute type
         item['product_category'] = re_words.search(cate_name, 0).group(0)
 
         # in jpg format
@@ -66,7 +68,9 @@ class ZhengJi(scrapy.Spider):
         item['product_image'] = left_pane.xpath('a/@href').extract()[0]
         item['product_name'] = left_pane.xpath('a/@title').extract()[0]
 
+        # error: index out of range
         right_pane = response.css(" .right .product-options")
+        # fix error: list index out of range
         item['brand_name'] = right_pane.css(" .description").xpath('a/text()').extract()[0]
 
         price_old = right_pane.css(" .price").xpath('span[@class="price-old"]/text()').extract()
