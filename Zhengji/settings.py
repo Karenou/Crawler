@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for ZhengjiData project
+# Scrapy settings for Zhengji project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -9,14 +9,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'ZhengjiData'
+BOT_NAME = 'Zhengji'
 
-SPIDER_MODULES = ['ZhengjiData.spiders']
-NEWSPIDER_MODULE = 'ZhengjiData.spiders'
+SPIDER_MODULES = ['Zhengji.spiders']
+NEWSPIDER_MODULE = 'Zhengji.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'ZhengjiData (+http://www.yourdomain.com)'
+#USER_AGENT = 'Zhengji (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -47,13 +47,13 @@ ROBOTSTXT_OBEY = True
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'ZhengjiData.middlewares.ZhengjidataSpiderMiddleware': 543,
+#    'Zhengji.middlewares.ZhengjiSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'ZhengjiData.middlewares.ZhengjidataDownloaderMiddleware': 543,
+#    'Zhengji.middlewares.ZhengjiDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -65,7 +65,7 @@ ROBOTSTXT_OBEY = True
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 #ITEM_PIPELINES = {
-#    'ZhengjiData.pipelines.ZhengjidataPipeline': 300,
+#    'Zhengji.pipelines.ZhengjiPipeline': 300,
 #}
 
 # Enable and configure the AutoThrottle extension (disabled by default)

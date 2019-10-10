@@ -8,7 +8,7 @@
 import scrapy
 
 
-class ZhengjiItem(scrapy.Item):
+class ZhengJiItem(scrapy.Item):
     product_id = scrapy.Field()
     request_url = scrapy.Field()
     product_name = scrapy.Field()
