@@ -13,6 +13,8 @@ BOT_NAME = 'Zhengji'
 
 SPIDER_MODULES = ['Zhengji.spiders']
 NEWSPIDER_MODULE = 'Zhengji.spiders'
+LOG_STDOUT = True
+LOG_FILE = 'output.txt'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -20,6 +22,13 @@ NEWSPIDER_MODULE = 'Zhengji.spiders'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
+
+
+# logger level
+
+
+
+
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32

@@ -5,7 +5,8 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-from scrapy import signals
+import logging
+from scrapy import signals, logformatter
 
 
 class ZhengjiSpiderMiddleware(object):
@@ -101,3 +102,17 @@ class ZhengjiDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+class SilentDropLogFormatter(logformatter.LogFormatter):
+    """
+    Change drop item log messages to debug level
+    """
+    def dropped(self, item, exception, response, spider):
+        return {
+            'level': logging.DEBUG,
+            'msg': logformatter.DROPPEDMSG,
+            'args': {
+                'exception': exception,
+                'item': item,
+            }
+        }

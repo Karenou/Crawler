@@ -1,7 +1,7 @@
 import scrapy, re
 from datetime import datetime
 from scrapy import signals
-from scrapy.xlib.pydispatch import dispatcher
+# from scrapy.xlib.pydispatch import dispatcher
 from urllib.parse import parse_qs, urlparse
 from Zhengji.items import ZhengJiItem
 
@@ -10,9 +10,15 @@ class ZhengJi(scrapy.Spider):
     name = 'ZhengJi'
     start_urls = ['http://35261646.com.hk/']
 
-    def __init__(self):
-        dispatcher.connect(self.spider_opened, signals.spider_opened)
-        dispatcher.connect(self.spider_closed, signals.spider_closed)
+    @classmethod
+    def from_crawler(cls, crawler,*args, **kwargs):
+        spider = super(ZhengJi, cls).from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_opened, signals.spider_opened)
+        crawler.signals.connect(spider.spider_closed, signals.spider_closed)
+        return spider
+    # def __init__(self):
+    #     dispatcher.connect(self.spider_opened, signals.spider_opened)
+    #     dispatcher.connect(self.spider_closed, signals.spider_closed)
 
     def spider_opened(self, spider):
         spider.started_on = datetime.now()
@@ -35,14 +41,12 @@ class ZhengJi(scrapy.Spider):
         # get the url of last page if any
         last_page = response.css("div.pagination").xpath('div/a[contains(text(), ">|")]/@href').extract()
         if last_page:
-            # start from page=2
+            # error: why only start from page=2, not fetch the first page
             last_page_no = int(parse_qs(urlparse(last_page[0]).query)['page'][0])
-            for i in range(1, last_page_no + 1):
-                if i == 1:
-                    yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
-                else:
-                    url = f"{cate_url}&page={i}"
-                    yield scrapy.Request(url, callback= self.parse_product, meta=response.meta)
+            yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
+            for i in range(2, last_page_no + 1):
+                url = f"{cate_url}&page={i}"
+                yield scrapy.Request(url, callback= self.parse_product, meta=response.meta)
         else:
             yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
 
@@ -57,21 +61,25 @@ class ZhengJi(scrapy.Spider):
         item['product_id'] = int(parse_qs(urlparse(response.request.url).query)['product_id'][0])
         # extract only Chinese name
         cate_name = response.xpath('//span[@itemprop="title"]/text()').extract()[1]
-        re_words = re.compile(u"[\u4e00-\u9fa5]+")
-        # fix error: NoneType don't have attribute type
-        item['product_category'] = re_words.search(cate_name, 0).group(0)
+        # fix error: bad character range at position 1
+        # re_words = re.compile(u"[\u4e00-\u9fa5]+")
+        # item['product_category'] = re_words.search(cate_name, 0).group(0)
+        item['product_category'] = cate_name
 
-        # in jpg format
+        # in jpg format, some products don't have any info
         item['product_desc'] = response.css(" #tab-description").xpath('p/img/@src').extract()
 
         left_pane  = response.css(" .product-info.split-60-40 .left .image")
         item['product_image'] = left_pane.xpath('a/@href').extract()[0]
         item['product_name'] = left_pane.xpath('a/@title').extract()[0]
 
-        # error: index out of range
         right_pane = response.css(" .right .product-options")
-        # fix error: list index out of range
-        item['brand_name'] = right_pane.css(" .description").xpath('a/text()').extract()[0]
+        # some products don't have brand_name
+        brand_name = right_pane.css(" .description").xpath('a/text()').extract()
+        if brand_name:
+            item['brand_name'] = brand_name[0]
+        else:
+            item['brand_name'] = ""
 
         price_old = right_pane.css(" .price").xpath('span[@class="price-old"]/text()').extract()
         price_old = float(re.search('[0-9.]+', price_old[0]).group(0))
@@ -81,15 +89,14 @@ class ZhengJi(scrapy.Spider):
 
         # discount if any
         product_discounts = []
-        discounts = response.css(" .discount").extract()
+        discounts = response.css(" .discount::text").extract()
         discounts = [discount.strip() for discount in discounts]
         if discounts:
-            i = 0
             for discount in discounts:
-                price = float(re.search('HKD[0-9.]+', discount).group(0)[3:])
-                unit = int(re.search('[0-9]]', discount).group(0))
-                product_discounts[i] = {"price": price, "unit": unit}
-                i = i + 1
+                if discount:
+                    price = float(re.search('HKD[0-9.]+', discount).group(0)[3:])
+                    unit = int(re.search('[0-9]+', discount).group(0))
+                    product_discounts.append({"price": price, "unit": unit})
         item['discount'] = product_discounts
 
         yield item
