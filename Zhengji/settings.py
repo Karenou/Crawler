@@ -9,12 +9,14 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import datetime
+
 BOT_NAME = 'Zhengji'
 
 SPIDER_MODULES = ['Zhengji.spiders']
 NEWSPIDER_MODULE = 'Zhengji.spiders'
-LOG_STDOUT = True
-LOG_FILE = 'output.txt'
+# LOG_STDOUT = True
+# LOG_FILE = 'output.txt'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -23,12 +25,10 @@ LOG_FILE = 'output.txt'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
-
 # logger level
-
-
-
-
+LOG_LEVEL = "INFO"
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+LOG_FORMATTER = 'Zhengji.middlewares.SilentDropLogFormatter'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -36,7 +36,7 @@ ROBOTSTXT_OBEY = True
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-#DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 0.2
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -61,9 +61,9 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    'Zhengji.middlewares.ZhengjiDownloaderMiddleware': 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+   'Zhengji.middlewares.ZhengjiDownloaderMiddleware': 543,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -73,9 +73,10 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'Zhengji.pipelines.ZhengjiPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'Zhengji.pipelines.FilteringPipeline': 300,
+    'Zhengji.pipelines.ZhengjiPipeline': 543
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -97,3 +98,23 @@ ROBOTSTXT_OBEY = True
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+date = datetime.datetime.now().strftime("year=%Y/month=%m/day=%d/")
+config = {
+    "local": {
+        "output_json": "tmp/zhengji-output-ls.jl"
+    },
+    "aws": {
+        "s3": {
+            "bucket": "gcp-airflow-bucket",
+            "filekey": "project=price-comparison/_SOURCE=ZHENGJI/" + date + "zhengji-output-ls.jl"
+        }
+    },
+    "gcp": {
+        "project-id": "ztore-data",
+        "bigquery": {
+            "database": "buyer_console",
+            "table": "zhengji_product"
+        }
+    }
+}

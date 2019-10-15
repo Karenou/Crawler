@@ -31,27 +31,27 @@ class ZhengJi(scrapy.Spider):
         self.logger.info(f"Total time cost of spider: {spider.worked_time} ")
 
     def parse(self, response):
-        cate_urls = response.css("div.box-category").xpath('ul/li/a/@href').extract()[2:4]
+        # modify to change to extract different categories
+        cate_urls = response.css("div.box-category").xpath('ul/li/a/@href').extract()[1:]
         for cate_url in cate_urls:
-            meta = {'cate_urls': cate_url}
+            meta = {'cate_url': cate_url}
             yield scrapy.Request(cate_url, callback=self.parse_cate_pagination, meta=meta)
 
     def parse_cate_pagination(self, response):
-        cate_url = response.meta['cate_urls']
+        cate_url = response.meta['cate_url']
+        url = f"{cate_url}&page={1}"
+        yield scrapy.Request(url, callback=self.parse_product, meta=response.meta)
         # get the url of last page if any
         last_page = response.css("div.pagination").xpath('div/a[contains(text(), ">|")]/@href').extract()
         if last_page:
-            # error: why only start from page=2, not fetch the first page
             last_page_no = int(parse_qs(urlparse(last_page[0]).query)['page'][0])
-            yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
             for i in range(2, last_page_no + 1):
                 url = f"{cate_url}&page={i}"
                 yield scrapy.Request(url, callback= self.parse_product, meta=response.meta)
-        else:
-            yield scrapy.Request(cate_url, callback=self.parse_product, meta=response.meta)
 
     def parse_product(self, response):
         product_urls = response.css(" .product-list-item").xpath('div/a/@href').extract()
+        # print("product_urls are: ", product_urls)
         for product_url in product_urls:
             yield scrapy.Request(product_url, callback=self.parse_product_info, meta=response.meta)
 
@@ -64,12 +64,12 @@ class ZhengJi(scrapy.Spider):
         # fix error: bad character range at position 1
         # re_words = re.compile(u"[\u4e00-\u9fa5]+")
         # item['product_category'] = re_words.search(cate_name, 0).group(0)
-        item['product_category'] = cate_name
+        item["product_category"] = [{"name": cate_name, "code": ""}]
 
         # in jpg format, some products don't have any info
         item['product_desc'] = response.css(" #tab-description").xpath('p/img/@src').extract()
 
-        left_pane  = response.css(" .product-info.split-60-40 .left .image")
+        left_pane = response.css(" .product-info.split-60-40 .left .image")
         item['product_image'] = left_pane.xpath('a/@href').extract()[0]
         item['product_name'] = left_pane.xpath('a/@title').extract()[0]
 
@@ -85,10 +85,18 @@ class ZhengJi(scrapy.Spider):
         price_old = float(re.search('[0-9.]+', price_old[0]).group(0))
         price_new = right_pane.css(" .price").xpath('span[@class="price-new"]/text()').extract()
         price_new = float(re.search('[0-9.]+', price_new[0]).group(0))
-        item['price'] = {"price_new": price_new, "price_old": price_old}
 
-        # discount if any
-        product_discounts = []
+        if 'x' in item['brand_name']:
+            pos = item['brand_name'].find('x') + 2
+            unit = item['brand_name'][pos:]
+            unit = int(re.search('[0-9]+', unit).group(0))
+        else:
+            unit = 1
+
+        price_arr = [{"unit": unit, "CU_status": "normal", "price": price_new}, \
+                         {"unit": unit, "CU_status": "original", "price": price_old}]
+
+        # add discount to price if any
         discounts = response.css(" .discount::text").extract()
         discounts = [discount.strip() for discount in discounts]
         if discounts:
@@ -96,8 +104,8 @@ class ZhengJi(scrapy.Spider):
                 if discount:
                     price = float(re.search('HKD[0-9.]+', discount).group(0)[3:])
                     unit = int(re.search('[0-9]+', discount).group(0))
-                    product_discounts.append({"price": price, "unit": unit})
-        item['discount'] = product_discounts
+                    price_arr.append({"unit": unit, "CU_status": "normal", "price": price})
+        item['price'] = price_arr
 
         yield item
 

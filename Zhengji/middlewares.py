@@ -103,6 +103,7 @@ class ZhengjiDownloaderMiddleware(object):
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
 
+
 class SilentDropLogFormatter(logformatter.LogFormatter):
     """
     Change drop item log messages to debug level
