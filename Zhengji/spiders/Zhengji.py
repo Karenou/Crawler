@@ -51,9 +51,10 @@ class ZhengJi(scrapy.Spider):
 
     def parse_product(self, response):
         product_urls = response.css(" .product-list-item").xpath('div/a/@href').extract()
-        # print("product_urls are: ", product_urls)
         for product_url in product_urls:
-            yield scrapy.Request(product_url, callback=self.parse_product_info, meta=response.meta)
+            # skip the empty url page
+            if parse_qs(urlparse(product_url).query)['product_id'] != "1834":
+                yield scrapy.Request(product_url, callback=self.parse_product_info, meta=response.meta)
 
     def parse_product_info(self, response):
         item = ZhengJiItem()
