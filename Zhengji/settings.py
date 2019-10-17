@@ -102,6 +102,7 @@ ITEM_PIPELINES = {
 date = datetime.datetime.now().strftime("year=%Y/month=%m/day=%d/")
 config = {
     "local": {
+        # local path: tmp/; cloud path: /tmp/
         "output_json": "/tmp/zhengji-output-ls.jl"
     },
     "aws": {

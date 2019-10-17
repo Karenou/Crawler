@@ -17,3 +17,4 @@ class ZhengJiItem(scrapy.Item):
     price = scrapy.Field()
     product_desc = scrapy.Field()
     product_image = scrapy.Field()
+    product_spec = scrapy.Field()
