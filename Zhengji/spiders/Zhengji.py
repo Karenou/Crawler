@@ -3,7 +3,7 @@ from datetime import datetime
 from scrapy import signals
 # from scrapy.xlib.pydispatch import dispatcher
 from urllib.parse import parse_qs, urlparse
-from Zhengji.items import ZhengJiItem
+from zhengji.items import ZhengJiItem
 
 
 class ZhengJi(scrapy.Spider):

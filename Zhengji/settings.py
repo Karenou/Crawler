@@ -11,16 +11,16 @@
 
 import datetime
 
-BOT_NAME = 'Zhengji'
+BOT_NAME = 'zhengji'
 
-SPIDER_MODULES = ['Zhengji.spiders']
-NEWSPIDER_MODULE = 'Zhengji.spiders'
+SPIDER_MODULES = ['zhengji.spiders']
+NEWSPIDER_MODULE = 'zhengji.spiders'
 # LOG_STDOUT = True
 # LOG_FILE = 'output.txt'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'Zhengji (+http://www.yourdomain.com)'
+#USER_AGENT = 'zhengji (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -28,7 +28,7 @@ ROBOTSTXT_OBEY = True
 # logger level
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-LOG_FORMATTER = 'Zhengji.middlewares.SilentDropLogFormatter'
+LOG_FORMATTER = 'zhengji.middlewares.SilentDropLogFormatter'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -56,13 +56,13 @@ DOWNLOAD_DELAY = 0.2
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'Zhengji.middlewares.ZhengjiSpiderMiddleware': 543,
+#    'zhengji.middlewares.ZhengjiSpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-   'Zhengji.middlewares.ZhengjiDownloaderMiddleware': 543,
+   'zhengji.middlewares.ZhengjiDownloaderMiddleware': 543,
 }
 
 # Enable or disable extensions
@@ -74,8 +74,8 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'Zhengji.pipelines.FilteringPipeline': 300,
-    'Zhengji.pipelines.ZhengjiPipeline': 543
+    'zhengji.pipelines.FilteringPipeline': 300,
+    'zhengji.pipelines.ZhengjiPipeline': 543
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -102,7 +102,7 @@ ITEM_PIPELINES = {
 date = datetime.datetime.now().strftime("year=%Y/month=%m/day=%d/")
 config = {
     "local": {
-        "output_json": "tmp/zhengji-output-ls.jl"
+        "output_json": "/tmp/zhengji-output-ls.jl"
     },
     "aws": {
         "s3": {

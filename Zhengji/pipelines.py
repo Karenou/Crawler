@@ -11,7 +11,7 @@ from google.cloud import bigquery
 import re
 from scrapy.exceptions import DropItem
 import simplejson as json
-from Zhengji.settings import config
+from zhengji.settings import config
 
 
 class FilteringPipeline(object):
@@ -47,8 +47,6 @@ class ZhengjiPipeline(object):
 
     def close_spider(self, spider):
         self.file.close()
-
-
 
         # post the result to s3
         s3_resource = boto3.resource("s3")
