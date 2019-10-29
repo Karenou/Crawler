@@ -84,10 +84,13 @@ class Sasa(scrapy.Spider):
         item['product_name'] = right_pane.css("div.title").xpath('a/span/text()').extract()[-1]
 
         content = right_pane.css("div.content").xpath('div/text()').extract()
+        product_dict = {}
         for element in content:
-            if 'specification' in element:
-                pos = element.find(':')
-                item['product_spec'] = element[pos:]
+            pos = element.find(':')
+            if pos != -1:
+                key = element[:pos]
+                product_dict[key] = element[(pos+1):].strip()
+
 
 
 
