@@ -12,7 +12,7 @@ class Sasa(scrapy.Spider):
 
     @classmethod
     def from_crawler(cls, crawler,*args, **kwargs):
-        spider = super(sasa, cls).from_crawler(crawler, *args, **kwargs)
+        spider = super(Sasa, cls).from_crawler(crawler, *args, **kwargs)
         crawler.signals.connect(spider.spider_opened, signals.spider_opened)
         crawler.signals.connect(spider.spider_closed, signals.spider_closed)
         return spider
@@ -32,15 +32,16 @@ class Sasa(scrapy.Spider):
         download_slot = response.meta['download_slot']
         cate_urls = response.css("div.category_expand_item").xpath('a/@href').extract()
         for url in cate_urls:
-            cate_url = download_slot + url
+            cate_url = 'http://' + download_slot + url
             meta = {'cate_url': cate_url}
-            yield scrapy.Request(cate_url, callback=self.parse_cate_pagination, meta=meta)
+            yield scrapy.Request(cate_url, callback=self.parse_subcategory, meta=meta)
 
     def parse_subcategory(self, response):
         subcate_urls = response.css("div.box_catalog div.content").xpath('dl/dt/a/@href').extract()
         for subcate_url in subcate_urls:
-            meta = {'subcate_url': subcate_url}
-            yield scrapy.Request(subcate_url, callback=self.parse_cate_pagination, meta=meta)
+            url = 'https://web1.sasa.com' + subcate_url
+            meta = {'subcate_url': url}
+            yield scrapy.Request(url, callback=self.parse_cate_pagination, meta=meta)
 
     def parse_cate_pagination(self, response):
         subcate_url = response.meta['subcate_url']
@@ -50,15 +51,13 @@ class Sasa(scrapy.Spider):
         page_urls = response.css("div.pages").xpath('a[string-length(text())>0]/@href').extract()
         if page_urls:
             for page_url in page_urls:
-                download_slot = response.meta['download_slot']
-                url = download_slot + page_url
+                url = 'https://web1.sasa.com' + page_url
                 yield scrapy.Request(url, callback= self.parse_product, meta=response.meta)
 
     def parse_product(self, response):
         product_urls = response.css("div.box_list").xpath('ul/li/a[2]/@href').extract()
         for product_url in product_urls:
-            download_slot = response.meta['download_slot']
-            url = download_slot + product_url
+            url = 'https://web1.sasa.com' + product_url
             yield scrapy.Request(url, callback=self.parse_product_info, meta=response.meta)
 
     def parse_product_info(self, response):
@@ -91,21 +90,25 @@ class Sasa(scrapy.Spider):
                 key = element[:pos]
                 product_dict[key] = element[(pos+1):].strip()
 
+        if 'specification' in product_dict.keys():
+            item['product_spec'] = product_dict['specification']
+        else:
+            item['product_spec'] = ''
 
+        price_arr = []
+        price_now = right_pane.css("div.content").xpath('div/big/text()').extract_first()
+        if 'RRP' in product_dict.keys():
+            price_arr.append({'unit': 1, 'CU_status': 'original', 'price': product_dict['RRP']})
+            price_arr.append({'unit': 1, 'CU_status': 'discount', 'price': price_now})
+        else:
+            price_arr.append({'unit': 1, 'CU_status': 'normal', 'price': price_now})
 
-
-        price_arr = [{"unit": 1, "CU_status": "normal", "price": price_new}, \
-                         {"unit": 1, "CU_status": "original", "price": price_old}]
-
-        # add discount to price if any
-        discounts = response.css(" .discount::text").extract()
-        discounts = [discount.strip() for discount in discounts]
-        if discounts:
-            for discount in discounts:
-                if discount:
-                    price = float(re.search('HKD[0-9.]+', discount).group(0)[3:])
-                    unit = int(re.search('[0-9]+', discount).group(0))
-                    price_arr.append({"unit": unit, "CU_status": "normal", "price": price})
         item['price'] = price_arr
+
+        product_desc = response.css("div#Detail div.right div.detail-item#chapter-2 div.content")\
+            .xpath('p/text()').extract()
+
+        separator = ' '
+        item['product_desc'] = separator.join(product_desc)
 
         yield item
