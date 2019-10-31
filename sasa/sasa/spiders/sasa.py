@@ -73,11 +73,13 @@ class Sasa(scrapy.Spider):
         banner = response.css("div.margin div.location")
         item['brand_name'] = banner.xpath('a[contains(@href,"brand")]/text()').extract_first()
         # there are levels of category
-        item['product_category'] = banner.xpath('a[contains(@href,"cate")]/text()').extract()[-1]
-        # item['product_name'] = banner.xpath('b/text()').extract_first()
+        product_cate = banner.xpath('a[contains(@href,"cate")]/text()').extract()[-1]
+        code_url = banner.xpath('a[contains(@href,"cate")]/@href').extract()[-1]
+        code = parse_qs(urlparse(code_url).query)['categoryId'][0]
+        item['product_category'] = [{"name": product_cate, "code": code}]
 
         left_pane = response.css("div.margin div.detail-info.mt-10 div.left")
-        item['product_image'] = left_pane.xpath('div/img/@src').extract()
+        item['product_image'] = left_pane.xpath('div/img/@src').extract_first()
 
         right_pane = response.css("div.margin div.detail-info.mt-10 div.right")
         item['product_name'] = right_pane.css("div.title").xpath('a/span/text()').extract()[-1]
@@ -97,8 +99,10 @@ class Sasa(scrapy.Spider):
 
         price_arr = []
         price_now = right_pane.css("div.content").xpath('div/big/text()').extract_first()
+        price_now = float(re.search('[0-9.0]+', price_now).group(0))
         if 'RRP' in product_dict.keys():
-            price_arr.append({'unit': 1, 'CU_status': 'original', 'price': product_dict['RRP']})
+            RRP = float(re.search('[0-9.0]+',product_dict['RRP']).group(0))
+            price_arr.append({'unit': 1, 'CU_status': 'original', 'price': RRP})
             price_arr.append({'unit': 1, 'CU_status': 'discount', 'price': price_now})
         else:
             price_arr.append({'unit': 1, 'CU_status': 'normal', 'price': price_now})
